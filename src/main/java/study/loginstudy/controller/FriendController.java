@@ -58,6 +58,7 @@ public class FriendController {
         return ResponseEntity.ok(requests);
     }
 
+
     @GetMapping("/friendsList")
     @ResponseBody
     public ResponseEntity<List<FriendRequest>> getFriends(Principal principal) {

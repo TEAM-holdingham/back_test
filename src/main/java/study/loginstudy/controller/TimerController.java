@@ -121,3 +121,4 @@ public class TimerController {
         return startTime != null && endTime != null ? java.time.Duration.between(startTime, endTime).getSeconds() : 0;
     }
 }
+

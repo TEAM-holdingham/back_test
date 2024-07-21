@@ -41,7 +41,6 @@
     });
 
     function loadPendingRequests() {
-        console.log("loadPendingRequests called"); // 함수 호출 확인용 콘솔 로그
         fetch('/friends/pending')
             .then(response => response.json())
             .then(data => {
@@ -104,14 +103,17 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        console.log("DOMContentLoaded event fired"); // 이 로그가 콘솔에 찍히는지 확인합니다.
         fetch('/user/principal')
             .then(response => response.text())
             .then(data => {
+                console.log("Principal name: ", data); // 이 로그가 콘솔에 찍히는지 확인합니다.
                 principalName = data;
                 loadPendingRequests();
                 loadFriends();
             }).catch(error => console.error('Error:', error));
     });
+
 </script>
 </body>
 </html>

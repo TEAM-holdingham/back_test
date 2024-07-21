@@ -1,6 +1,7 @@
 package study.loginstudy.domain.entity;
 
 import javax.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 public class FriendRequest {
@@ -8,6 +9,27 @@ public class FriendRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "sender_id")
+    @JsonBackReference
+    private User sender;
+
+    @ManyToOne
+    @JoinColumn(name = "receiver_id")
+    @JsonBackReference
+    private User receiver;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    public enum Status {
+        PENDING,
+        ACCEPTED,
+        REJECTED
+    }
+
+    // Getters and setters
 
     public User getSender() {
         return sender;
@@ -17,10 +39,6 @@ public class FriendRequest {
         this.sender = sender;
     }
 
-    @ManyToOne
-    @JoinColumn(name = "sender_id")
-    private User sender;
-
     public User getReceiver() {
         return receiver;
     }
@@ -29,24 +47,11 @@ public class FriendRequest {
         this.receiver = receiver;
     }
 
-    @ManyToOne
-    @JoinColumn(name = "receiver_id")
-    private User receiver;
-
     public Status getStatus() {
         return status;
     }
 
     public void setStatus(Status status) {
         this.status = status;
-    }
-
-    @Enumerated(EnumType.STRING)
-    private Status status;
-
-    public enum Status {
-        PENDING,
-        ACCEPTED,
-        REJECTED
     }
 }

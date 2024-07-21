@@ -1,15 +1,38 @@
 spring:
-  # DB 접속 정보 설정
+  server:
+    port: 8080
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/test
     username: root
-    password: 1022
-  # JPA 설정
+    password: #DB 비밀번호
+
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username:  #구글 이메일 아이디
+    password:   #앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  app:
+    reset-password-url: http://localhost:8080/reset-password
+
+  profile:
+    picture:
+      path: C:/Holham/proFileImage
+
+
 
   # OAuth 로그인
   security:

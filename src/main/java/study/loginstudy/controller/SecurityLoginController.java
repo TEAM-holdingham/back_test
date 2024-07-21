@@ -111,4 +111,28 @@ public class SecurityLoginController {
             return e.getMessage();
         }
     }
+
+
+    @GetMapping("/my_page")
+    public String myPage(Model model, Authentication authentication) {
+        String loginId = authentication.getName(); // 현재 로그인한 사용자 정보 가져오기
+        User user = userService.findByLoginId(loginId); // 유저 서비스에서 사용자 정보 조회
+        model.addAttribute("user", user);
+        return "my_page"; // my_page.html 템플릿 반환
+    }
+
+    @GetMapping("/confirm-delete")
+    public String confirmDelete(Model model, Authentication authentication) {
+        String loginId = authentication.getName(); // 현재 로그인한 사용자 정보 가져오기
+        model.addAttribute("loginId", loginId);
+        return "confirm_delete";
+    }
+
+    @PostMapping("/delete-account")
+    public String deleteAccount(HttpSession session, Authentication authentication) {
+        String loginId = authentication.getName(); // 현재 로그인한 사용자 정보 가져오기
+        userService.deleteAccount(loginId);
+        session.invalidate();  // 세션 무효화
+        return "redirect:/"; // 첫 화면으로 리다이렉트
+    }
 }

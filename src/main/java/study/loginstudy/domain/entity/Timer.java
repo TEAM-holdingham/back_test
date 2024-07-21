@@ -109,3 +109,4 @@ public class Timer {
 
     // 다른 필드들에 대한 getter, setter 메서드들을 적절히 추가/수정해야 함
 }
+
