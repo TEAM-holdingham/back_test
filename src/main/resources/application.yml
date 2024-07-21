@@ -6,7 +6,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/test
     username: root
-    password: #DB 비밀번호
+    password:  #DB 비밀번호
 
   jpa:
     hibernate:
@@ -16,7 +16,7 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username:  #구글 이메일 아이디
+    username:   #구글 이메일 아이디
     password:   #앱 비밀번호
     properties:
       mail:

@@ -59,6 +59,7 @@ public class FriendController {
     }
 
 
+
     @GetMapping("/friendsList")
     @ResponseBody
     public ResponseEntity<List<FriendRequest>> getFriends(Principal principal) {

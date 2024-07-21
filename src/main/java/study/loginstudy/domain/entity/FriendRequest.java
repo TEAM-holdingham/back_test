@@ -1,6 +1,7 @@
 package study.loginstudy.domain.entity;
 
 import javax.persistence.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
@@ -12,12 +13,12 @@ public class FriendRequest {
 
     @ManyToOne
     @JoinColumn(name = "sender_id")
-    @JsonBackReference
+    @JsonManagedReference
     private User sender;
 
     @ManyToOne
     @JoinColumn(name = "receiver_id")
-    @JsonBackReference
+    @JsonManagedReference
     private User receiver;
 
     @Enumerated(EnumType.STRING)

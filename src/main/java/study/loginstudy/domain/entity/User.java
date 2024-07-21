@@ -1,5 +1,6 @@
 package study.loginstudy.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,13 +42,13 @@ public class User {
     private String provider;
     private String providerId;
 
-    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<FriendRequest> sentFriendRequests;
+    @OneToMany(mappedBy = "sender")
+    @JsonBackReference
+    private List<FriendRequest> sentRequests;
 
-    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<FriendRequest> receivedFriendRequests;
+    @OneToMany(mappedBy = "receiver")
+    @JsonBackReference
+    private List<FriendRequest> receivedRequests;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private PasswordResetToken passwordResetToken;
@@ -64,5 +65,37 @@ public class User {
 
     public void setProfilePicture(String profilePicture) {
         this.profilePicture = profilePicture;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public List<FriendRequest> getSentRequests() {
+        return sentRequests;
+    }
+
+    public void setSentRequests(List<FriendRequest> sentRequests) {
+        this.sentRequests = sentRequests;
+    }
+
+    public List<FriendRequest> getReceivedRequests() {
+        return receivedRequests;
+    }
+
+    public void setReceivedRequests(List<FriendRequest> receivedRequests) {
+        this.receivedRequests = receivedRequests;
     }
 }
