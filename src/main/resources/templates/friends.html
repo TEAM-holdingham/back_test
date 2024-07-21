@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Friends</title>
+</head>
+<body>
+<h1>Friends</h1>
+<div>
+    <h2>Add Friend</h2>
+    <form id="add-friend-form">
+        <input type="text" id="friend-nickname" placeholder="Friend's Nickname">
+        <button type="submit">Add Friend</button>
+    </form>
+</div>
+<div>
+    <h2>Pending Friend Requests</h2>
+    <ul id="pending-requests">
+        <!-- Pending requests will be listed here -->
+    </ul>
+</div>
+<div>
+    <h2>Friends</h2>
+    <ul id="friends-list">
+        <!-- Friends will be listed here -->
+    </ul>
+</div>
+<script>
+    let principalName;
+
+    document.getElementById('add-friend-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const friendNickname = document.getElementById('friend-nickname').value;
+
+        fetch('/friends/request?receiverNickname=' + friendNickname, {
+            method: 'POST'
+        }).then(response => response.text()).then(data => {
+            alert(data);
+            loadPendingRequests();
+        }).catch(error => console.error('Error:', error));
+    });
+
+    function loadPendingRequests() {
+        console.log("loadPendingRequests called"); // 함수 호출 확인용 콘솔 로그
+        fetch('/friends/pending')
+            .then(response => response.json())
+            .then(data => {
+                console.log("Pending requests data: ", data); // 콘솔에 데이터를 출력
+                const pendingRequests = document.getElementById('pending-requests');
+                pendingRequests.innerHTML = '';
+                data.forEach(request => {
+                    const li = document.createElement('li');
+                    li.textContent = `Request from ${request.sender.nickname}`;
+                    const acceptButton = document.createElement('button');
+                    acceptButton.textContent = 'Accept';
+                    acceptButton.addEventListener('click', () => respondToRequest(request.sender.nickname, true));
+                    const rejectButton = document.createElement('button');
+                    rejectButton.textContent = 'Reject';
+                    rejectButton.addEventListener('click', () => respondToRequest(request.sender.nickname, false));
+                    li.appendChild(acceptButton);
+                    li.appendChild(rejectButton);
+                    pendingRequests.appendChild(li);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+
+    function respondToRequest(senderNickname, accepted) {
+        fetch(`/friends/respond?senderNickname=${senderNickname}&accepted=${accepted}`, {
+            method: 'POST'
+        }).then(response => response.text()).then(data => {
+            alert(data);
+            loadPendingRequests();
+            loadFriends();
+        }).catch(error => console.error('Error:', error));
+    }
+
+    function loadFriends() {
+        fetch('/friends/friendsList')
+            .then(response => response.json())
+            .then(data => {
+                const friendsList = document.getElementById('friends-list');
+                friendsList.innerHTML = '';
+                data.forEach(friend => {
+                    const li = document.createElement('li');
+                    let friendNickname = '';
+                    if (friend.sender.nickname === principalName) {
+                        friendNickname = friend.receiver.nickname;
+                        li.textContent = `Friend: ${friendNickname}`;
+                    } else {
+                        friendNickname = friend.sender.nickname;
+                        li.textContent = `Friend: ${friendNickname}`;
+                    }
+                    const chatButton = document.createElement('button');
+                    chatButton.textContent = 'Chat';
+                    chatButton.addEventListener('click', () => {
+                        window.location.href = `/chat?friend=${friendNickname}`;
+                    });
+                    li.appendChild(chatButton);
+                    friendsList.appendChild(li);
+                });
+            }).catch(error => console.error('Error:', error));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/user/principal')
+            .then(response => response.text())
+            .then(data => {
+                principalName = data;
+                loadPendingRequests();
+                loadFriends();
+            }).catch(error => console.error('Error:', error));
+    });
+</script>
+</body>
+</html>
