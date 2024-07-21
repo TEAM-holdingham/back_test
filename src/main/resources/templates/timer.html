@@ -1,198 +1,169 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>메뉴바와 스톱워치</title>
-    <link href="style.css" rel="stylesheet" type="text/css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>타이머 예제</title>
     <style>
-        /* 메뉴바 스타일 */
-        .menu-bar {
-            width: 350px;
-            height: 100vh;
-            padding: 0;
-            background-color: #e4e8f0; /* 메뉴바 배경색 */
-            position: absolute;
-            left: 0; /* x 좌표 */
-            top: 0;
-            bottom: 0;
-        }
-
-        /* 메뉴 항목 스타일 */
-        .menu-item {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .menu-item li {
-            margin-bottom: 10px;
-        }
-
-        .menu-item li a {
-            text-decoration: none;
-            color: #000000; /* 메뉴 텍스트 색상 */
-            font-size: 25px;
-            font-weight: bold;
-            position: absolute;
-        }
-
-        .menu-item li a:hover {
-            text-decoration: underline;
-        }
-
-        /* 스톱워치 스타일 */
-        .wrapper {
+        body {
+            font-family: Arial, sans-serif;
             text-align: center;
+            padding-top: 50px;
+        }
+        .timer {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        .buttons {
             margin-top: 20px;
         }
-
-        #hours,
-        #minutes,
-        #seconds {
-            display: inline-block;
-            width: 30px;
-        }
-
-        #button-start,
-        #button-stop,
-        #button-reset {
-            margin-top: 10px;
-            margin-right: 5px;
-        }
-
-        /* 새로운 항목 스타일 */
-        .new-item {
-            position: absolute;
-            font-size: 16px;
-        }
-
-        .timer {
-            left: 750px;
-            top: 0px;
-            color: #91b6fa; /* 타이머 색상 */
-            width: 660px; /* 타이머 너비 */
-            height: 80px; /* 타이머 높이 */
-            font-size: 250px;
-        }
-
-        .rounded-box {
-            left: 450px;
-            top: 407px;
-            width: 800px;
-            height: 291px;
-            border-radius: 20px; /* 둥근 모서리 */
-            border: 1.27px solid #000000; /* 테두리 색상 */
-            background-color: #e4e8f0; /* 박스 배경색 */
-        }
-
-        .new-item.message {
-            position: absolute;
-            left: 490px; /* x 좌표 */
-            top: 500px; /* y 좌표 */
-            font-size: 28px; /* 폰트 크기 */
-        }
-
-        .destination {
-            left: 980px;
-            top: 300px;
-            color: #000000; /* 목적지 텍스트 색상 */
-        }
-
-        .new-item.circle {
-            position: absolute;
-            left: 1120px; /* x 좌표 */
-            top: 440px; /* y 좌표 */
-            width: 100px; /* 원 크기 */
-            height: 100px; /* 원 크기 */
-            border-radius: 50%; /* 원 모양 */
-            background-color: #000000; /* 원 색상 */
-        }
-
-        .new-item.channel {
-            position: absolute;
-            left: 1140px; /* x 좌표 */
-            top: 553px; /* y 좌표 */
-            font-size: 14px; /* 폰트 크기 */
-        }
-
-        .new-item.time {
-            position: absolute;
-            left: 980px; /* x 좌표 */
-            top: 608px; /* y 좌표 */
-            font-size: 21px; /* 폰트 크기 */
-        }
-
-        .new-item.circle2 {
-            position: absolute;
-            left: 1120px; /* x 좌표 */
-            top: 600px; /* y 좌표 */
-            width: 50px; /* 원 크기 */
-            height: 50px; /* 원 크기 */
-            border-radius: 40%; /* 원 모양 */
-            background-color: #ffff; /* 원 색상 */
+        button {
+            font-size: 1rem;
+            margin: 0 10px;
+            padding: 10px 20px;
+            cursor: pointer;
         }
     </style>
 </head>
-
 <body>
-<div class="menu-bar">
-    <ul class="menu-item">
-        <li><a href="#" style="top: 80px; left: 55px">홈</a></li>
-        <li><a href="#" style="top: 140px; left: 55px">나의 기록</a></li>
-        <li><a href="#" style="top: 260px; left: 55px">마이페이지</a></li>
-        <li><a href="#" style="top: 320px; left: 55px">친구 관리</a></li>
-        <li><a href="#" style="top: 440px; left: 55px">설정</a></li>
-        <li><a href="#" style="top: 560px; left: 55px">디엠</a></li>
-        <li><a href="#" style="top: 620px; left: 55px">알림</a></li>
-        <li><a href="#" style="top: 680px; left: 55px">공지</a></li>
-    </ul>
+<div class="timer">00:00:00</div>
+<div class="buttons">
+    <button id="startBtn" onclick="startTimer()">시작</button>
+    <button id="pauseBtn" onclick="pauseTimer()" disabled>일시정지</button>
+    <button id="stopBtn" onclick="stopTimer()">공부 종료</button>
 </div>
 
-<div style="position: absolute; left: 66px; top: 860px">
-    <a href="#">로그아웃</a>
-</div>
+<script>
+    let timerInterval;
+    let timerRunning = false;
+    let startTime;
+    let elapsedTime = 0;
+    const resetHour = 2; // 리셋할 시간 (24시간 형식)
+    const resetMinute = 2; // 리셋할 분
 
-<div style="position: absolute; left: 277px; top: 900px">
-    <a href="#">접기</a>
-</div>
+    // 페이지 로드 시, 저장된 시간 불러오기
+    window.onload = function() {
+        let storedTime = localStorage.getItem('elapsedTime');
+        if (storedTime) {
+            elapsedTime = parseInt(storedTime, 10);
+            updateTimerDisplay();
+        }
+        scheduleNextReset(); // 다음 리셋 시간 설정
+    }
 
-<div class="wrapper">
-    <h1>스톱워치</h1>
-    <p>
-        <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
-    </p>
-    <form id="timerForm" action="timer.php">
-        <button id="button-start" type="button">시작</button>
-        <button id="button-stop" type="button">정지</button>
-        <button id="button-reset" type="button">재시작</button>
-    </form>
-</div>
+    function startTimer() {
+        fetch('/timer/start', { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Timer started successfully');
+                    startTime = Date.now() - elapsedTime;
+                    timerInterval = setInterval(updateTimer, 1000);
+                    timerRunning = true;
+                    disableButton("startBtn");
+                    enableButton("pauseBtn");
+                    scheduleNextReset(); // 다음 리셋 시간 설정
+                } else {
+                    console.error('Failed to start timer');
+                }
+            });
+    }
 
-<div class="new-item destination">
-    <span>목적지까지 0시간 00분 남았습니다.</span>
-</div>
+    function pauseTimer() {
+        fetch('/timer/pause', { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Timer paused successfully');
+                    clearInterval(timerInterval);
+                    timerRunning = false;
+                    disableButton("pauseBtn");
+                    enableButton("startBtn");
+                    // 일시정지 시, 현재 경과 시간을 로컬 스토리지에 저장
+                    localStorage.setItem('elapsedTime', elapsedTime.toString());
+                } else {
+                    console.error('Failed to pause timer');
+                }
+            });
+    }
 
-<div class="new-item rounded-box"></div>
+    function stopTimer() {
+        fetch('/timer/stop', { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Timer stopped successfully');
+                    clearInterval(timerInterval);
+                    timerRunning = false;
+                    // 정지 시, 로컬 스토리지 초기화하지 않음
+                    enableButton("startBtn");
+                    disableButton("pauseBtn");
+                } else {
+                    console.error('Failed to stop timer');
+                }
+            });
+    }
 
-<div class="new-item message">
-    <span>아직 오늘의 목표 시간이 설정되지 않았습니다.</span>
-</div>
+    function updateTimer() {
+        elapsedTime = Date.now() - startTime;
+        updateTimerDisplay();
 
-<div class="new-item circle"></div>
+        // 매 시간마다 리셋 시간을 체크하여 리셋할 시간이면 타이머를 멈추고 초기화
+        if (isResetTime()) {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            elapsedTime = 0;
+            updateTimerDisplay();
+            localStorage.removeItem('elapsedTime');
+        }
+    }
 
-<div class="new-item channel">
-    <span>승연티비</span>
-</div>
+    function updateTimerDisplay() {
+        let seconds = Math.floor((elapsedTime / 1000) % 60);
+        let minutes = Math.floor((elapsedTime / (1000 * 60)) % 60);
+        let hours = Math.floor((elapsedTime / (1000 * 60 * 60)) % 24);
 
-<div class="new-item time">
-    <span>시간 설정하기</span>
-</div>
+        seconds = (seconds < 10) ? `0${seconds}` : `${seconds}`;
+        minutes = (minutes < 10) ? `0${minutes}` : `${minutes}`;
+        hours = (hours < 10) ? `0${hours}` : `${hours}`;
 
-<div class="new-item circle2"></div>
+        document.querySelector(".timer").textContent = `${hours}:${minutes}:${seconds}`;
+    }
 
-<!-- JavaScript 파일 추가 -->
-<script src="timer.js"></script>
+    function disableButton(id) {
+        document.getElementById(id).disabled = true;
+    }
+
+    function enableButton(id) {
+        document.getElementById(id).disabled = false;
+    }
+
+    // 다음 리셋 시간 계산 및 스케줄링
+    function scheduleNextReset() {
+        let now = new Date();
+        let resetTime = new Date();
+        resetTime.setHours(resetHour, resetMinute, 0, 0);
+
+        if (resetTime <= now) {
+            resetTime.setDate(resetTime.getDate() + 1); // 다음 날 설정
+        }
+
+        let timeUntilReset = resetTime - now;
+        setTimeout(resetTimer, timeUntilReset);
+    }
+
+    // 타이머 리셋 함수
+    function resetTimer() {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        elapsedTime = 0;
+        updateTimerDisplay();
+        localStorage.removeItem('elapsedTime');
+        scheduleNextReset(); // 다시 다음 리셋 시간 설정
+    }
+
+    // 현재 시간이 리셋할 시간인지 확인
+    function isResetTime() {
+        let now = new Date();
+        return now.getHours() === resetHour && now.getMinutes() === resetMinute && now.getSeconds() === 0;
+    }
+</script>
 </body>
 </html>
