@@ -3,15 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>Friends</title>
+    <style>
+        /* 간단한 스타일링 추가 */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        div {
+            margin-bottom: 20px;
+        }
+        button {
+            margin-left: 10px;
+        }
+        #search-results {
+            margin-top: 10px;
+        }
+        #search-results li {
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
 <h1>Friends</h1>
 <div>
-    <h2>Add Friend</h2>
-    <form id="add-friend-form">
-        <input type="text" id="friend-nickname" placeholder="Friend's Nickname">
-        <button type="submit">Add Friend</button>
-    </form>
+    <h2>Search for Friends</h2>
+    <input type="text" id="search-input" placeholder="Search Nicknames">
+    <button id="search-button">Search</button>
+    <ul id="search-results">
+        <!-- Search results will be listed here -->
+    </ul>
 </div>
 <div>
     <h2>Pending Friend Requests</h2>
@@ -26,25 +45,66 @@
     </ul>
 </div>
 <script>
-    console.log("Script loaded"); // 스크립트가 로드되었는지 확인
+    console.log("Script loaded");
 
-    let principalName;
+    let principalName = "";
 
-    document.getElementById('add-friend-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        console.log("Add friend form submitted"); // 폼 제출 이벤트가 발생하는지 확인
-        const friendNickname = document.getElementById('friend-nickname').value;
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/friends/user/principal')
+            .then(response => response.text())
+            .then(data => {
+                principalName = data;
+                loadPendingRequests();
+                loadFriends();
+            }).catch(error => console.error('Error:', error));
+    });
 
-        fetch('/friends/request?receiverNickname=' + friendNickname, {
+    document.getElementById('search-button').addEventListener('click', function() {
+        const searchQuery = document.getElementById('search-input').value;
+        searchFriends(searchQuery);
+    });
+
+    function searchFriends(query) {
+        fetch(`/friends/search?nickname=${encodeURIComponent(query)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const searchResults = document.getElementById('search-results');
+                searchResults.innerHTML = ''; // Clear previous results
+                data.forEach(user => {
+                    if (user.nickname !== principalName) {
+                        const li = document.createElement('li');
+                        li.textContent = user.nickname;
+
+                        const addButton = document.createElement('button');
+                        addButton.textContent = 'Add';
+                        addButton.addEventListener('click', () => {
+                            sendFriendRequest(user.nickname);
+                        });
+
+                        li.appendChild(addButton);
+                        searchResults.appendChild(li);
+                    }
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function sendFriendRequest(receiverNickname) {
+        fetch('/friends/request?receiverNickname=' + encodeURIComponent(receiverNickname), {
             method: 'POST'
         }).then(response => response.text()).then(data => {
             alert(data);
             loadPendingRequests();
         }).catch(error => console.error('Error:', error));
-    });
+    }
 
     function loadPendingRequests() {
-        console.log("loadPendingRequests called"); // 함수 호출 여부 확인
+        console.log("loadPendingRequests called");
         fetch('/friends/pending')
             .then(response => {
                 if (!response.ok) {
@@ -54,23 +114,22 @@
                 return response.json();
             })
             .then(data => {
-                console.log("Pending requests data: ", data); // 응답 데이터 확인
+                console.log("Pending requests data: ", data);
                 const pendingRequests = document.getElementById('pending-requests');
                 pendingRequests.innerHTML = '';
                 data.forEach(request => {
-                    console.log(request); // 각 요청의 구조를 확인
+                    console.log(request);
                     const li = document.createElement('li');
-                    if (request.sender && request.sender.nickname) {
-                        li.textContent = `Request from ${request.sender.nickname}`;
-                    } else {
-                        li.textContent = 'Invalid request data';
-                    }
+                    li.textContent = request.sender && request.sender.nickname ? `Request from ${request.sender.nickname}` : 'Invalid request data';
+
                     const acceptButton = document.createElement('button');
                     acceptButton.textContent = 'Accept';
                     acceptButton.addEventListener('click', () => respondToRequest(request.sender.nickname, true));
+
                     const rejectButton = document.createElement('button');
                     rejectButton.textContent = 'Reject';
                     rejectButton.addEventListener('click', () => respondToRequest(request.sender.nickname, false));
+
                     li.appendChild(acceptButton);
                     li.appendChild(rejectButton);
                     pendingRequests.appendChild(li);
@@ -79,11 +138,8 @@
             .catch(error => console.error('Error:', error));
     }
 
-
-
-
     function respondToRequest(senderNickname, accepted) {
-        fetch(`/friends/respond?senderNickname=${senderNickname}&accepted=${accepted}`, {
+        fetch(`/friends/respond?senderNickname=${encodeURIComponent(senderNickname)}&accepted=${accepted}`, {
             method: 'POST'
         }).then(response => response.text()).then(data => {
             alert(data);
@@ -93,57 +149,83 @@
     }
 
     function loadFriends() {
-        console.log("loadFriends called"); // 함수 호출 여부 확인
+        console.log("loadFriends called");
+
         fetch('/friends/friendsList')
             .then(response => response.json())
             .then(data => {
                 const friendsList = document.getElementById('friends-list');
                 friendsList.innerHTML = '';
+
                 data.forEach(friend => {
-                    const li = document.createElement('li');
                     let friendNickname = '';
-                    if (friend.sender && friend.sender.nickname && friend.sender.nickname === principalName) {
-                        if (friend.receiver && friend.receiver.nickname) {
-                            friendNickname = friend.receiver.nickname;
-                            li.textContent = `Friend: ${friendNickname}`;
-                        } else {
-                            li.textContent = 'Friend: unknown (receiver nickname missing)';
+
+                    if (friend.sender && friend.sender.nickname === principalName) {
+                        if (friend.receiver && friend.receiver.loginId) {
+                            fetch(`/users/nickname?loginId=${encodeURIComponent(friend.receiver.loginId)}`)
+                                .then(response => response.json())
+                                .then(receiverData => {
+                                    if (receiverData.nickname) {
+                                        friendNickname = receiverData.nickname;
+                                        displayFriend(friendNickname, friend.receiver.loginId);
+                                    }
+                                })
+                                .catch(error => console.error('Error fetching receiver nickname:', error));
                         }
-                    } else if (friend.sender && friend.sender.nickname) {
-                        friendNickname = friend.sender.nickname;
-                        li.textContent = `Friend: ${friendNickname}`;
-                    } else {
-                        li.textContent = 'Friend: unknown (sender nickname missing)';
+                    } else if (friend.receiver && friend.receiver.loginId === principalName) {
+                        if (friend.sender && friend.sender.nickname) {
+                            friendNickname = friend.sender.nickname;
+                            displayFriend(friendNickname, friend.sender.loginId);
+                        }
                     }
+                });
+
+                function displayFriend(nickname, friendLoginId) {
+                    const li = document.createElement('li');
+                    li.textContent = `Friend: ${nickname}`;
 
                     const chatButton = document.createElement('button');
                     chatButton.textContent = 'Chat';
                     chatButton.addEventListener('click', () => {
-                        if (friendNickname) {
-                            window.location.href = `/chat?friend=${friendNickname}`;
+                        if (nickname) {
+                            window.location.href = `/chat?friend=${encodeURIComponent(nickname)}`;
                         } else {
                             alert('Friend nickname is missing.');
                         }
                     });
                     li.appendChild(chatButton);
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', () => {
+                        if (confirm(`Are you sure you want to delete ${nickname} from your friends?`)) {
+                            deleteFriend(friendLoginId);
+                        }
+                    });
+                    li.appendChild(deleteButton);
+
                     friendsList.appendChild(li);
-                });
+                }
             }).catch(error => console.error('Error:', error));
     }
 
-
-
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log("DOMContentLoaded event fired"); // DOMContentLoaded 이벤트 확인
-        fetch('friends/user/principal')
-            .then(response => response.text())
+    function deleteFriend(friendLoginId) {
+        fetch(`/friends/delete?currentUserLoginId=${encodeURIComponent(principalName)}&friendLoginId=${encodeURIComponent(friendLoginId)}`, {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    throw new Error('Network response was not ok.');
+                }
+            })
             .then(data => {
-                console.log("Principal name: ", data); // 응답 데이터 확인
-                principalName = data;
-                loadPendingRequests();
+                alert(data);
                 loadFriends();
-            }).catch(error => console.error('Error:', error));
-    });
+            })
+            .catch(error => console.error('Error deleting friend:', error));
+    }
 </script>
 </body>
 </html>

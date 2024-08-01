@@ -10,9 +10,16 @@
     <h2>회원 가입</h2>
     <form th:method="post" th:action="|@{/{loginType}/join (loginType=${loginType})}|" th:object="${joinRequest}">
         <div>
-            <label th:for="loginId">로그인 아이디 : </label>
+            <label th:for="loginId">로그인 아이디 (이메일): </label>
             <input type="text" th:field="*{loginId}" th:errorclass="error-input"/>
             <div class="error-class" th:errors="*{loginId}"></div>
+            <button type="button" onclick="sendVerificationEmail()">인증 메일 보내기</button>
+        </div>
+        <br/>
+        <div>
+            <label th:for="emailToken">이메일 인증 토큰: </label>
+            <input type="text" id="emailToken" name="emailToken"/>
+            <button type="button" onclick="verifyEmailToken()">인증 토큰 확인</button>
         </div>
         <br/>
         <div>
@@ -81,6 +88,32 @@
         <br/>
         <button type="submit">회원 가입</button>
     </form>
+
+    <script>
+        function sendVerificationEmail() {
+            const loginId = document.querySelector('[name="loginId"]').value;
+            fetch('/api/sendVerificationEmail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ loginId: loginId })
+            })
+                .then(response => response.text())
+                .then(data => alert(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function verifyEmailToken() {
+            const token = document.getElementById('emailToken').value;
+            fetch('/api/verifyEmail?token=' + token, {
+                method: 'GET'
+            })
+                .then(response => response.text())
+                .then(data => alert(data))
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
 </div>
 </body>
 </html>

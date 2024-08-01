@@ -1,19 +1,19 @@
 package study.loginstudy.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import study.loginstudy.domain.dto.UserProfile;
 import study.loginstudy.domain.entity.User;
 import study.loginstudy.service.UserService;
 
 import java.io.IOException;
+import java.security.Principal;
+import java.util.List;
 
 @Controller
 @RequestMapping("/profile")
@@ -51,5 +51,13 @@ public class UserController {
     public String deleteProfile() {
         userService.deleteAccount(userService.getCurrentUser().getLoginId());
         return "redirect:/logout";
+    }
+
+    @GetMapping("/search")
+    @ResponseBody
+    public ResponseEntity<List<User>> searchFriends(Principal principal, @RequestParam String nickname) {
+        String currentUserNickname = userService.getNicknameByLoginId(principal.getName());
+        List<User> users = userService.findUsersByNicknameStartingWithExcludingCurrentUser(nickname, currentUserNickname);
+        return ResponseEntity.ok(users);
     }
 }

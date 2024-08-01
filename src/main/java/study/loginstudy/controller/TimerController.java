@@ -1,15 +1,18 @@
 package study.loginstudy.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import study.loginstudy.domain.entity.Timer;
+import study.loginstudy.domain.entity.User;
 import study.loginstudy.repository.TimerRepository;
+import study.loginstudy.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/timer")
@@ -17,6 +20,9 @@ public class TimerController {
 
     @Autowired
     private TimerRepository timerRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private Timer currentTimer;
 
@@ -29,36 +35,41 @@ public class TimerController {
     @ResponseBody
     public String startTimer() {
         LocalDateTime startTime = LocalDateTime.now();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String loginId = authentication.getName();
+        Optional<User> optionalUser = userRepository.findByLoginId(loginId);
+
+        if (!optionalUser.isPresent()) {
+            return "User not found";
+        }
+
+        User user = optionalUser.get();
 
         if (currentTimer != null && currentTimer.isPaused()) {
-            // pause_duration 계산
             long pauseDurationSeconds = calculateElapsedTime(currentTimer.getPauseTime(), startTime);
             String formattedPauseDuration = formatElapsedTime(pauseDurationSeconds);
             currentTimer.setPauseDuration(formattedPauseDuration);
             currentTimer.setPaused(false);
 
-            // 현재 타이머 객체 저장
             timerRepository.save(currentTimer);
 
-            // 새로운 타이머 객체 생성 및 저장
             Timer newTimer = new Timer();
             newTimer.setStartTime(startTime);
             newTimer.setPaused(false);
             newTimer.setElapsedTime("00:00:00");
             newTimer.setPauseDuration("00:00:00");
+            newTimer.setUser(user);
 
             timerRepository.save(newTimer);
-            currentTimer = newTimer; // 새로운 타이머 객체로 갱신
+            currentTimer = newTimer;
 
         } else {
             currentTimer = new Timer();
             currentTimer.setStartTime(startTime);
             currentTimer.setPaused(false);
-
-            // elapsed_time 필드 기본값 설정
             currentTimer.setElapsedTime("00:00:00");
-            // pause_duration 필드 기본값 설정
             currentTimer.setPauseDuration("00:00:00");
+            currentTimer.setUser(user);
 
             timerRepository.save(currentTimer);
         }
@@ -68,20 +79,17 @@ public class TimerController {
 
     @PostMapping("/pause")
     @ResponseBody
-    public String pauseTimer() {
+    public String pauseTimer(@RequestBody Map<String, String> payload) {
         if (currentTimer != null && !currentTimer.isPaused()) {
             LocalDateTime pauseTime = LocalDateTime.now();
             currentTimer.setPaused(true);
             currentTimer.setPauseTime(pauseTime);
 
-            // 경과 시간 계산
             long elapsedSeconds = calculateElapsedTime(currentTimer.getStartTime(), pauseTime);
             String formattedElapsedTime = formatElapsedTime(elapsedSeconds);
 
-            // elapsed_time 업데이트
             currentTimer.setElapsedTime(formattedElapsedTime);
-
-            // 타이머 객체 저장
+            currentTimer.setActivityDescription(payload.get("activityDescription"));
             timerRepository.save(currentTimer);
 
             return "Timer paused successfully";
@@ -96,19 +104,16 @@ public class TimerController {
         if (currentTimer != null) {
             currentTimer.setCompleted(true);
             currentTimer.setEndTime(LocalDateTime.now());
-
-            // 정지 시간만 저장
             currentTimer.setStopTime(currentTimer.getEndTime());
 
             timerRepository.save(currentTimer);
-            currentTimer = null; // currentTimer 초기화
+            currentTimer = null;
             return "Timer stopped successfully";
         } else {
             return "Timer is not started";
         }
     }
 
-    // 초를 HH:MM:SS 형식의 문자열로 포맷하는 메서드
     private String formatElapsedTime(long elapsedTimeSeconds) {
         long hours = elapsedTimeSeconds / 3600;
         long minutes = (elapsedTimeSeconds % 3600) / 60;
@@ -116,9 +121,28 @@ public class TimerController {
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
-    // 시작 시간과 종료 시간 사이의 경과 시간을 초 단위로 계산하는 메서드
     private long calculateElapsedTime(LocalDateTime startTime, LocalDateTime endTime) {
         return startTime != null && endTime != null ? java.time.Duration.between(startTime, endTime).getSeconds() : 0;
     }
-}
+    @PostMapping("/reset")
+    @ResponseBody
+    public String resetTimer(@RequestBody Map<String, Integer> requestBody) {
+        if (currentTimer != null && !currentTimer.isPaused()) {
+            int elapsedSeconds = requestBody.getOrDefault("elapsedTime", 0);
+            String formattedElapsedTime = formatElapsedTime(elapsedSeconds);
 
+            // 경과 시간 업데이트
+            currentTimer.setElapsedTime(formattedElapsedTime);
+            currentTimer.setCompleted(true);
+            currentTimer.setEndTime(LocalDateTime.now());
+
+            // 타이머 객체 저장
+            timerRepository.save(currentTimer);
+            currentTimer = null; // currentTimer 초기화
+
+            return "Timer reset and elapsed time saved successfully";
+        } else {
+            return "Timer is not running, no need to reset";
+        }
+    }
+}

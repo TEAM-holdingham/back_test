@@ -27,7 +27,8 @@ dependencies {
 
     // Database
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    runtimeOnly 'com.mysql:mysql-connector-j'
+    //runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.4'
 
     // Spring Security
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -52,6 +53,8 @@ dependencies {
 
     //email
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+
 
 }
 

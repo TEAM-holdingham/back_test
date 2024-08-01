@@ -20,6 +20,22 @@ public class Timer {
     private String pauseDuration;
     private LocalDateTime endTime;
 
+    @Column(length = 1000)
+    private String activityDescription;  // 활동 기록 필드 추가
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;  // User 엔티티와의 관계 설정 추가
+
+
     public String getPauseDuration() {
         return pauseDuration;
     }
@@ -108,5 +124,14 @@ public class Timer {
     }
 
     // 다른 필드들에 대한 getter, setter 메서드들을 적절히 추가/수정해야 함
+
+    //활동 기록 추가
+    public String getActivityDescription() {
+        return activityDescription;
+    }
+
+    public void setActivityDescription(String activityDescription) {
+        this.activityDescription = activityDescription;
+    }
 }
 

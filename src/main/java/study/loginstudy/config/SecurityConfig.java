@@ -23,6 +23,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 // 인증
                 .antMatchers("/security-login/info").authenticated()
+                .antMatchers("/timer/**").authenticated() // 타이머 페이지 접근에 대해 인증 요구
                 // 인가
                 .antMatchers("/security-login/admin/**").hasAuthority(UserRole.ADMIN.name())
                 .anyRequest().permitAll()

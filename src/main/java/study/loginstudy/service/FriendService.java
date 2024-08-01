@@ -80,6 +80,26 @@ public class FriendService {
         return List.of();
     }
 
+    public void removeFriend(String userLoginId, String friendLoginId) {
+        Optional<User> userOpt = userRepository.findByLoginId(userLoginId);
+        Optional<User> friendOpt = userRepository.findByLoginId(friendLoginId);
+
+        if (userOpt.isPresent() && friendOpt.isPresent()) {
+            User user = userOpt.get();
+            User friend = friendOpt.get();
+
+            // 현재 사용자와 친구 사이의 모든 친구 요청을 삭제
+            deleteFriendRequest(user, friend);
+            deleteFriendRequest(friend, user);
+        } else {
+            throw new RuntimeException("Either user or friend not found. User loginId: " + userLoginId + ", Friend loginId: " + friendLoginId);
+        }
+    }
+
+    private void deleteFriendRequest(User user, User friend) {
+        Optional<FriendRequest> requestOpt = friendRequestRepository.findBySenderAndReceiver(user, friend);
+        requestOpt.ifPresent(friendRequestRepository::delete);
+    }
     public List<FriendRequest> getFriends(String loginId) {
         Optional<User> userOpt = userRepository.findByLoginId(loginId);
 

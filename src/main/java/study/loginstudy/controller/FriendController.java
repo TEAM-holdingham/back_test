@@ -1,10 +1,12 @@
 package study.loginstudy.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import study.loginstudy.domain.entity.FriendRequest;
+import study.loginstudy.domain.entity.User;
 import study.loginstudy.service.FriendService;
 import study.loginstudy.service.UserService;
 
@@ -59,12 +61,32 @@ public class FriendController {
     }
 
 
-
     @GetMapping("/friendsList")
     @ResponseBody
     public ResponseEntity<List<FriendRequest>> getFriends(Principal principal) {
         String loginId = principal.getName();
         List<FriendRequest> friends = friendService.getFriends(loginId);
         return ResponseEntity.ok(friends);
+    }
+
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteFriend(
+            @RequestParam String currentUserLoginId,
+            @RequestParam String friendLoginId) {
+        try {
+            friendService.removeFriend(currentUserLoginId, friendLoginId);
+            return ResponseEntity.ok("Friend deleted successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error deleting friend: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/search")
+    @ResponseBody
+    public ResponseEntity<List<User>> searchFriends(Principal principal, @RequestParam String nickname) {
+        String currentUserNickname = userService.getNicknameByLoginId(principal.getName());
+        List<User> users = userService.findUsersByNicknameStartingWithExcludingCurrentUser(nickname, currentUserNickname);
+        return ResponseEntity.ok(users);
     }
 }
