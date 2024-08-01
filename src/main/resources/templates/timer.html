@@ -67,9 +67,8 @@
     let timerRunning = false;
     let startTime;
     let elapsedTime = 0;
-    const resetHour = 14; // 리셋할 시간 (24시간 형식)
-    const resetMinute = 49; // 리셋할 분
-
+    const resetHour = 16; // 리셋할 시간 (24시간 형식)
+    const resetMinute = 31
     window.onload = function() {
         let storedTime = localStorage.getItem('elapsedTime');
         if (storedTime) {
