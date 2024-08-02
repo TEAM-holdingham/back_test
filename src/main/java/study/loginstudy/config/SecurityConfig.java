@@ -21,6 +21,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeRequests()
+                // ToDoList 관련 요청에 대해 인증 요구
+                .antMatchers("/todolist/**").authenticated()
                 // 인증
                 .antMatchers("/security-login/info").authenticated()
                 .antMatchers("/timer/**").authenticated() // 타이머 페이지 접근에 대해 인증 요구

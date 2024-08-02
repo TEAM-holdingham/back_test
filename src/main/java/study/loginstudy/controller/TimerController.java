@@ -45,35 +45,29 @@ public class TimerController {
 
         User user = optionalUser.get();
 
-        if (currentTimer != null && currentTimer.isPaused()) {
-            long pauseDurationSeconds = calculateElapsedTime(currentTimer.getPauseTime(), startTime);
-            String formattedPauseDuration = formatElapsedTime(pauseDurationSeconds);
-            currentTimer.setPauseDuration(formattedPauseDuration);
-            currentTimer.setPaused(false);
+        // 최근 타이머를 가져와서 pause_time을 확인
+        Optional<Timer> lastTimerOpt = timerRepository.findTopByUserOrderByStartTimeDesc(user);
 
-            timerRepository.save(currentTimer);
+        if (lastTimerOpt.isPresent()) {
+            Timer lastTimer = lastTimerOpt.get();
+            if (lastTimer.isPaused()) {
+                long pauseDurationSeconds = calculateElapsedTime(lastTimer.getPauseTime(), startTime);
+                String formattedPauseDuration = formatElapsedTime(pauseDurationSeconds);
+                lastTimer.setPauseDuration(formattedPauseDuration);
+                lastTimer.setPaused(false);
 
-            Timer newTimer = new Timer();
-            newTimer.setStartTime(startTime);
-            newTimer.setPaused(false);
-            newTimer.setElapsedTime("00:00:00");
-            newTimer.setPauseDuration("00:00:00");
-            newTimer.setUser(user);
-
-            timerRepository.save(newTimer);
-            currentTimer = newTimer;
-
-        } else {
-            currentTimer = new Timer();
-            currentTimer.setStartTime(startTime);
-            currentTimer.setPaused(false);
-            currentTimer.setElapsedTime("00:00:00");
-            currentTimer.setPauseDuration("00:00:00");
-            currentTimer.setUser(user);
-
-            timerRepository.save(currentTimer);
+                timerRepository.save(lastTimer);
+            }
         }
 
+        currentTimer = new Timer();
+        currentTimer.setStartTime(startTime);
+        currentTimer.setPaused(false);
+        currentTimer.setElapsedTime("00:00:00");
+        currentTimer.setPauseDuration("00:00:00");
+        currentTimer.setUser(user);
+
+        timerRepository.save(currentTimer);
         return "Timer started successfully";
     }
 
@@ -114,6 +108,26 @@ public class TimerController {
         }
     }
 
+    @PostMapping("/reset")
+    @ResponseBody
+    public String resetTimer(@RequestBody Map<String, Integer> requestBody) {
+        if (currentTimer != null && !currentTimer.isPaused()) {
+            int elapsedSeconds = requestBody.getOrDefault("elapsedTime", 0);
+            String formattedElapsedTime = formatElapsedTime(elapsedSeconds);
+
+            currentTimer.setElapsedTime(formattedElapsedTime);
+            currentTimer.setCompleted(true);
+            currentTimer.setEndTime(LocalDateTime.now());
+
+            timerRepository.save(currentTimer);
+            currentTimer = null;
+
+            return "Timer reset and elapsed time saved successfully";
+        } else {
+            return "Timer is not running, no need to reset";
+        }
+    }
+
     private String formatElapsedTime(long elapsedTimeSeconds) {
         long hours = elapsedTimeSeconds / 3600;
         long minutes = (elapsedTimeSeconds % 3600) / 60;
@@ -123,26 +137,5 @@ public class TimerController {
 
     private long calculateElapsedTime(LocalDateTime startTime, LocalDateTime endTime) {
         return startTime != null && endTime != null ? java.time.Duration.between(startTime, endTime).getSeconds() : 0;
-    }
-    @PostMapping("/reset")
-    @ResponseBody
-    public String resetTimer(@RequestBody Map<String, Integer> requestBody) {
-        if (currentTimer != null && !currentTimer.isPaused()) {
-            int elapsedSeconds = requestBody.getOrDefault("elapsedTime", 0);
-            String formattedElapsedTime = formatElapsedTime(elapsedSeconds);
-
-            // 경과 시간 업데이트
-            currentTimer.setElapsedTime(formattedElapsedTime);
-            currentTimer.setCompleted(true);
-            currentTimer.setEndTime(LocalDateTime.now());
-
-            // 타이머 객체 저장
-            timerRepository.save(currentTimer);
-            currentTimer = null; // currentTimer 초기화
-
-            return "Timer reset and elapsed time saved successfully";
-        } else {
-            return "Timer is not running, no need to reset";
-        }
     }
 }

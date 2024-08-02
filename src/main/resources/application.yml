@@ -2,17 +2,17 @@ spring:
   server:
     port: 8080
 
-#  datasource:
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: jdbc:mysql://localhost:3306/test
-#    username: root
-#    password:  #DB비번
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-#    url: jdbc:mariadb://svc.sel4.cloudtype.app:31310/test
-    url: jdbc:mariadb://localhost:3306/test
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/test
     username: root
-    password: 1204
+    password:  1022
+#  datasource:
+#    driver-class-name: org.mariadb.jdbc.Driver
+##    url: jdbc:mariadb://svc.sel4.cloudtype.app:31310/test
+#    url: jdbc:mariadb://localhost:3306/test
+#    username: root
+#    password: 1204
 
   jpa:
     hibernate:
