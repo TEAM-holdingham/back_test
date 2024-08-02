@@ -18,7 +18,6 @@ public class ToDoList {
     @Column(name = "study_time")
     private Integer studyTime;
 
-<<<<<<< HEAD
     public User getUser() {
         return user;
     }
@@ -32,8 +31,6 @@ public class ToDoList {
     @JoinColumn(name = "user_id")
     private User user;
 
-=======
->>>>>>> cc1c588b353a0198d845dbaa746966af04791a13
     // Getter와 Setter
 
     public Long getId() {
