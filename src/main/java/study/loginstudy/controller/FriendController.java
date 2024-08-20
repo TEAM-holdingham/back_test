@@ -11,7 +11,9 @@ import study.loginstudy.service.FriendService;
 import study.loginstudy.service.UserService;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/friends")
@@ -89,4 +91,15 @@ public class FriendController {
         List<User> users = userService.findUsersByNicknameStartingWithExcludingCurrentUser(nickname, currentUserNickname);
         return ResponseEntity.ok(users);
     }
+
+    // API 엔드포인트
+    @GetMapping("/api/friends")
+    public ResponseEntity<Map<String, Object>> apiFriendsPage() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("page", "friends");
+
+        return ResponseEntity.ok(response);
+    }
+
 }

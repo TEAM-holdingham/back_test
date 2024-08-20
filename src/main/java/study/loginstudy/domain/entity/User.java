@@ -23,7 +23,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     private String loginId;
+
     private String password;
     @Column(unique = true)
     private String nickname;
@@ -46,6 +48,11 @@ public class User {
     // timer와 연동
     @OneToMany(mappedBy = "user")
     private Set<Timer> timers;
+
+    // todolist와 연동
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<ToDoList> toDoLists;
 
     public boolean isEmailVerified() {
         return emailVerified;
@@ -121,6 +128,15 @@ public class User {
 
     public void setTimers(Set<Timer> timers) {
         this.timers = timers;
+    }
+
+    // toDoLists의 Getter와 Setter
+    public List<ToDoList> getToDoLists() {
+        return toDoLists;
+    }
+
+    public void setToDoLists(List<ToDoList> toDoLists) {
+        this.toDoLists = toDoLists;
     }
 }
 

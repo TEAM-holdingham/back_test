@@ -6,10 +6,9 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.ResponseEntity;
 import study.loginstudy.domain.dto.ChatMessage;
 import study.loginstudy.domain.entity.ChatMessageEntity;
 import study.loginstudy.repository.ChatMessageRepository;
@@ -32,10 +31,12 @@ public class ChatController {
     private ChatRoomRepository chatRoomRepository;
 
     @Autowired
-    private UserRepository userRepository;  // UserRepository 추가
+    private UserRepository userRepository;
 
     @Autowired
     private SimpMessageSendingOperations messagingTemplate;
+
+    // 기존 코드: HTML 반환 및 단순 문자열 응답
 
     @MessageMapping("/chat.sendMessage")
     @Transactional
@@ -63,7 +64,6 @@ public class ChatController {
             System.out.println("Error saving message to DB: " + e.getMessage());
         }
 
-        // Send message to the room
         messagingTemplate.convertAndSend("/topic/messages/" + chatMessage.getRoomId(), chatMessage);
 
         System.out.println("Sent message: " + chatMessage);
@@ -133,7 +133,6 @@ public class ChatController {
         String receiverNickname = friend;  // 친구의 닉네임은 직접 제공됨
         String receiverLoginId = getLoginIdByNickname(receiverNickname);  // 친구의 로그인 ID를 가져오는 로직 필요
 
-        // 두 사용자의 로그인 ID와 닉네임을 사전 순으로 정렬하여 일관된 roomID 생성
         String roomId = generateRoomId(senderLoginId, senderNickname, receiverLoginId, receiverNickname);
 
         Map<String, String> response = new HashMap<>();
@@ -148,14 +147,67 @@ public class ChatController {
     }
 
     private String getNicknameByLoginId(String loginId) {
-        // loginId를 기반으로 닉네임을 조회하는 로직
         Optional<User> user = userRepository.findByLoginId(loginId);
         return user.map(User::getNickname).orElseThrow(() -> new RuntimeException("User not found for loginId: " + loginId));
     }
 
     private String getLoginIdByNickname(String nickname) {
-        // nickname을 기반으로 로그인 ID를 조회하는 로직
         Optional<User> user = userRepository.findByNickname(nickname);
         return user.map(User::getLoginId).orElseThrow(() -> new RuntimeException("User not found for nickname: " + nickname));
+    }
+
+    // 새로 추가된 API: JSON 응답을 위한 메서드들
+
+    @GetMapping("/api/chat")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> apiChatPage(@RequestParam String friend, Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+        if (principal == null) {
+            response.put("status", "error");
+            response.put("message", "User not authenticated");
+            return ResponseEntity.status(401).body(response);
+        }
+        response.put("friend", friend);
+        response.put("username", principal.getName());
+        response.put("status", "success");
+        return ResponseEntity.ok(response);  // JSON 형식으로 사용자 정보 반환
+    }
+
+    @GetMapping("/api/chat/history")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> apiGetChatHistory(@RequestParam String friend, @RequestParam String roomId, Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+        if (principal == null) {
+            response.put("status", "error");
+            response.put("message", "User not authenticated");
+            return ResponseEntity.status(401).body(response);
+        }
+        String username = principal.getName();
+        List<ChatMessageEntity> chatMessages = chatMessageRepository.findByRoomIdOrderByTimestampAsc(roomId);
+        List<ChatMessage> chatMessageList = chatMessages.stream()
+                .map(msg -> new ChatMessage(msg.getSender(), msg.getReceiver(), msg.getContent(), msg.getTimestamp().toString(), msg.getRoomId(), msg.getType()))
+                .collect(Collectors.toList());
+
+        response.put("status", "success");
+        response.put("messages", chatMessageList);
+        return ResponseEntity.ok(response);  // JSON 형식으로 대화 기록 반환
+    }
+
+    @GetMapping("/api/chat/roomId")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> apiGetRoomId(@RequestParam String friend, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).body(Collections.singletonMap("message", "User not authenticated"));
+        }
+        String senderLoginId = principal.getName();
+        String senderNickname = getNicknameByLoginId(senderLoginId);
+        String receiverNickname = friend;
+        String receiverLoginId = getLoginIdByNickname(receiverNickname);
+
+        String roomId = generateRoomId(senderLoginId, senderNickname, receiverLoginId, receiverNickname);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("roomId", roomId);
+        return ResponseEntity.ok(response);  // JSON 형식으로 roomId 반환
     }
 }

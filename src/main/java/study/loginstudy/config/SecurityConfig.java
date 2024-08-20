@@ -1,14 +1,22 @@
 package study.loginstudy.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import study.loginstudy.auth.MyAccessDeniedHandler;
-import study.loginstudy.auth.MyAuthenticationEntryPoint;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import study.loginstudy.auth.oauth.PrincipalOauth2UserService;
 import study.loginstudy.domain.UserRole;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -19,38 +27,72 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable()
+        http
+                .cors().configurationSource(corsConfigurationSource())
+                .and()
+                .csrf().disable()
                 .authorizeRequests()
-                // 인증
-                .antMatchers("/security-login/info").authenticated()
-                .antMatchers("/timer/**").authenticated() // 타이머 페이지 접근에 대해 인증 요구
-                // 인가
-                .antMatchers("/security-login/admin/**").hasAuthority(UserRole.ADMIN.name())
+                .antMatchers("/api/login").permitAll()
+                .antMatchers("/api/todolist/**").authenticated()
+                .antMatchers("/security-login/api/login").permitAll()
+                .antMatchers("/security-login/api/my-page").authenticated()
+                .antMatchers("/api/timer/**").authenticated()
+                .antMatchers("/security-login/api/admin/**").hasAuthority(UserRole.ADMIN.name())
+                .antMatchers("/profile/api/**").authenticated()
                 .anyRequest().permitAll()
                 .and()
-                // Form Login 방식 적용
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // 세션이 필요할 때만 생성
+                .and()
                 .formLogin()
+                .loginPage("/security-login/api/login")
+                .loginProcessingUrl("/security-login/api/login")
                 .usernameParameter("loginId")
                 .passwordParameter("password")
-                .loginPage("/security-login/login")
                 .defaultSuccessUrl("/security-login")
-                .failureUrl("/security-login/login")
+                .failureUrl("/security-login/api/login?error=true")
+                .permitAll()
                 .and()
                 .logout()
-                .logoutUrl("/security-login/logout")
+                .logoutUrl("/security-login/api/logout")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
+                .permitAll()
                 .and()
-                // OAuth 로그인
                 .oauth2Login()
-                .loginPage("/security-login/login")
+                .loginPage("/security-login/api/login")
                 .defaultSuccessUrl("/security-login")
                 .userInfoEndpoint()
                 .userService(principalOauth2UserService);
-
-        http
-                .exceptionHandling()
-                .authenticationEntryPoint(new MyAuthenticationEntryPoint())
-                .accessDeniedHandler(new MyAccessDeniedHandler());
     }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:8080",
+                "http://127.0.0.1:8080",
+                "https://port-0-busta-lyumntwj5a7765e6.sel4.cloudtype.app"
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);  // withCredentials를 허용
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
+
+//    @Bean
+//    public PasswordEncoder passwordEncoder() {
+//        return new BCryptPasswordEncoder();
+//    }
 }

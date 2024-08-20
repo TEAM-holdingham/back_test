@@ -18,6 +18,19 @@ public class ToDoList {
     @Column(name = "study_time")
     private Integer studyTime;
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    // User와의 관계 추가
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     // Getter와 Setter
 
     public Long getId() {
